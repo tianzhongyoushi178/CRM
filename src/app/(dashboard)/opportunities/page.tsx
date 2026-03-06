@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import type { OpportunityStage } from "@/generated/prisma";
+import type { OpportunityStage } from "@prisma/client";
 
 interface OpportunityRow {
   id: string;

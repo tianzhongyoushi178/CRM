@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { ActivityType, ActivityStatus, Priority } from "@/generated/prisma";
+import { ActivityType, ActivityStatus, Priority } from "@prisma/client";
 
 const activityTypeLabels: Record<ActivityType, string> = {
   CALL: "電話",

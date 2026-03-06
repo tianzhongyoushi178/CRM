@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import DashboardWidget from "@/components/DashboardWidget";
-import { OpportunityStage } from "@/generated/prisma";
+import { OpportunityStage } from "@prisma/client";
 
 const stageLabels: Record<OpportunityStage, string> = {
   PROSPECTING: "見込み",

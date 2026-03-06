@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import type { AccountRating } from "@/generated/prisma";
+import type { AccountRating } from "@prisma/client";
 
 const ITEMS_PER_PAGE = 20;
 

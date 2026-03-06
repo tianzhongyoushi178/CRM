@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { Pencil, ArrowLeft } from "lucide-react";
 import TaskDeleteButton from "./TaskDeleteButton";
-import { TaskStatus, Priority } from "@/generated/prisma";
+import { TaskStatus, Priority } from "@prisma/client";
 
 const taskStatusLabels: Record<TaskStatus, string> = {
   NOT_STARTED: "未着手",

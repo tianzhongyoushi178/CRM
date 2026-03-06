@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { TaskStatus, Priority } from "@/generated/prisma";
+import { TaskStatus, Priority } from "@prisma/client";
 
 const taskStatusLabels: Record<TaskStatus, string> = {
   NOT_STARTED: "未着手",

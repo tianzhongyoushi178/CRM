@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import type { AccountRating, OpportunityStage } from "@/generated/prisma";
+import type { AccountRating, OpportunityStage } from "@prisma/client";
 import DeleteAccountButton from "./DeleteAccountButton";
 import DetailField from "@/components/DetailField";
 import DetailTabs from "@/components/DetailTabs";

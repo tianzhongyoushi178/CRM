@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { TaskStatus, Priority } from "@/generated/prisma";
+import { TaskStatus, Priority } from "@prisma/client";
 
 const taskStatusLabels: Record<TaskStatus, string> = {
   NOT_STARTED: "未着手",

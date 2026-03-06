@@ -2,7 +2,7 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ActivityType, ActivityStatus, Priority } from "@/generated/prisma";
+import { ActivityType, ActivityStatus, Priority } from "@prisma/client";
 
 const activityTypeLabels: Record<ActivityType, string> = {
   CALL: "電話",

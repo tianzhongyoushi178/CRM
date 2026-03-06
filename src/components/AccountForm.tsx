@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { AccountRating } from "@/generated/prisma";
+import type { AccountRating } from "@prisma/client";
 
 interface AccountFormData {
   name: string;

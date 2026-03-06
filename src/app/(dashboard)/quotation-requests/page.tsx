@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import type { QuotationStatus } from "@/generated/prisma";
+import type { QuotationStatus } from "@prisma/client";
 
 interface QuotationRequestRow {
   id: string;

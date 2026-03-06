@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LeadStatus, LeadSource } from "@/generated/prisma";
+import { LeadStatus, LeadSource } from "@prisma/client";
 
 const statusOptions: { value: LeadStatus; label: string }[] = [
   { value: "NEW", label: "新規" },
