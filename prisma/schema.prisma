@@ -1,0 +1,549 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ユーザー管理
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  hashedPassword String
+  role           Role      @default(USER)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  ownedAccounts      Account[]
+  ownedContacts      Contact[]
+  ownedOpportunities Opportunity[]
+  ownedLeads         Lead[]
+  activities         Activity[]
+  tasks              Task[]
+
+  // 追加リレーション
+  quotationRequestsOwned     QuotationRequest[] @relation("quotationRequestOwner")
+  quotationRequestsSales     QuotationRequest[] @relation("quotationSalesPerson")
+  quotationRequestsSe        QuotationRequest[] @relation("quotationSePerson")
+  quotationRequestsSeGl      QuotationRequest[] @relation("quotationSeGroupLeader")
+  quotationRequestsSeManager QuotationRequest[] @relation("quotationSeManager")
+  analysisInfos              AnalysisInfo[]     @relation("analysisInfoOwner")
+  ideas                      Idea[]             @relation("ideaOwner")
+  sharedCalendars            SharedCalendar[]   @relation("sharedCalendarOwner")
+  chatterPosts               ChatterPost[]      @relation("chatterPostAuthor")
+  chatterComments            ChatterComment[]   @relation("chatterCommentAuthor")
+  chatterLikes               ChatterLike[]      @relation("chatterLikeUser")
+  notifications              Notification[]     @relation("notificationUser")
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+}
+
+// 取引先
+model Account {
+  id            String         @id @default(cuid())
+  name          String
+  industry      String?
+  phone         String?
+  website       String?
+  address       String?
+  city          String?
+  prefecture    String?
+  postalCode    String?
+  description   String?
+  annualRevenue Float?
+  employees     Int?
+  rating        AccountRating?
+  ownerId       String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  owner         User            @relation(fields: [ownerId], references: [id])
+  contacts      Contact[]
+  opportunities Opportunity[]
+  activities    Activity[]
+
+  @@map("accounts")
+}
+
+enum AccountRating {
+  HOT
+  WARM
+  COLD
+}
+
+// 取引先責任者
+model Contact {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  mobile      String?
+  title       String?
+  department  String?
+  accountId   String?
+  ownerId     String
+  address     String?
+  city        String?
+  prefecture  String?
+  postalCode  String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner               User                 @relation(fields: [ownerId], references: [id])
+  account             Account?             @relation(fields: [accountId], references: [id])
+  opportunityContacts OpportunityContact[]
+  activities          Activity[]
+
+  @@map("contacts")
+}
+
+// 商談
+model Opportunity {
+  id          String           @id @default(cuid())
+  name        String
+  amount      Float?
+  stage       OpportunityStage @default(PROSPECTING)
+  probability Int?
+  closeDate   DateTime?
+  description String?
+  accountId   String?
+  ownerId     String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  owner      User                 @relation(fields: [ownerId], references: [id])
+  account    Account?             @relation(fields: [accountId], references: [id])
+  contacts   OpportunityContact[]
+  activities Activity[]
+
+  // 追加リレーション
+  quotationRequests QuotationRequest[]
+  analysisInfos     AnalysisInfo[]
+  salesDetails      SalesDetail[]
+
+  @@map("opportunities")
+}
+
+model OpportunityContact {
+  id            String @id @default(cuid())
+  opportunityId String
+  contactId     String
+  role          String?
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  contact     Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, contactId])
+  @@map("opportunity_contacts")
+}
+
+enum OpportunityStage {
+  PROSPECTING
+  QUALIFICATION
+  NEEDS_ANALYSIS
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+// リード
+model Lead {
+  id                     String      @id @default(cuid())
+  firstName              String
+  lastName               String
+  email                  String?
+  phone                  String?
+  company                String?
+  title                  String?
+  status                 LeadStatus  @default(NEW)
+  source                 LeadSource?
+  industry               String?
+  description            String?
+  address                String?
+  city                   String?
+  prefecture             String?
+  postalCode             String?
+  ownerId                String
+  isConverted            Boolean     @default(false)
+  convertedAccountId     String?
+  convertedContactId     String?
+  convertedOpportunityId String?
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  owner      User       @relation(fields: [ownerId], references: [id])
+  activities Activity[]
+
+  @@map("leads")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  WORKING
+  QUALIFIED
+  UNQUALIFIED
+}
+
+enum LeadSource {
+  WEB
+  PHONE
+  REFERRAL
+  PARTNER
+  ADVERTISEMENT
+  TRADE_SHOW
+  OTHER
+}
+
+// 活動
+model Activity {
+  id            String         @id @default(cuid())
+  type          ActivityType
+  subject       String
+  description   String?
+  dueDate       DateTime?
+  completedDate DateTime?
+  status        ActivityStatus @default(OPEN)
+  priority      Priority       @default(NORMAL)
+  ownerId       String
+  accountId     String?
+  contactId     String?
+  opportunityId String?
+  leadId        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  owner       User         @relation(fields: [ownerId], references: [id])
+  account     Account?     @relation(fields: [accountId], references: [id])
+  contact     Contact?     @relation(fields: [contactId], references: [id])
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id])
+  lead        Lead?        @relation(fields: [leadId], references: [id])
+
+  @@map("activities")
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  VISIT
+  TASK
+  OTHER
+}
+
+enum ActivityStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  HIGH
+  NORMAL
+  LOW
+}
+
+// タスク
+model Task {
+  id          String     @id @default(cuid())
+  subject     String
+  description String?
+  dueDate     DateTime?
+  status      TaskStatus @default(NOT_STARTED)
+  priority    Priority   @default(NORMAL)
+  ownerId     String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id])
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  DEFERRED
+}
+
+// SE見積依頼
+model QuotationRequest {
+  id                 String          @id @default(cuid())
+  name               String
+  title              String?
+  status             QuotationStatus @default(DRAFT)
+  assignStatus       String?
+  opportunityId      String?
+  accountName        String?
+  endUserName        String?
+  quotationNumber    String?
+  salesBranch        String?
+  installLocation    String?
+  installEnvironment String?
+  submissionDeadline DateTime?
+  salesPersonId      String?
+  sePersonId         String?
+  seGroupLeaderId    String?
+  seManagerId        String?
+  seDepartment       String?
+  seManagerComment   String?
+  seNote             String?
+  seWorkStartDate    DateTime?
+  seWorkEndDate      DateTime?
+  seWorkEndActual    DateTime?
+  assignDate         DateTime?
+  ownerId            String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  // 基本情報（読取専用・自動計算系）
+  salesOffice        String?  // 営業職場
+  salesPersonName    String?  // 営業担当名（表示用）
+  endUserName2       String?  // エンドユーザ名（別管理用）
+
+  // 設置環境
+  installEnvType     String?  // 設置環境（--なし--/一般/非一般）
+
+  // 設置環境 非一般詳細
+  tempSpecial        Boolean  @default(false) // 温度帯特殊
+  cleanRoom          Boolean  @default(false) // クリーン
+  hazardStorage      Boolean  @default(false) // 危険物貯蔵
+  envOther           Boolean  @default(false) // その他（環境）
+  tempSpecialDetail  String?  // 温度帯特殊温度 詳細
+  cleanRoomDetail    String?  // クリーン 詳細
+  hazardStorageDetail String? // 危険物貯蔵 詳細
+  envOtherDetail     String?  // その他 詳細
+
+  // 荷姿・荷重
+  loadType           String?  // 荷姿・荷重（--なし--/1種/2種以上）
+
+  // 荷姿・荷重 1種詳細
+  loadSize           String?  // 荷サイズ
+  loadWeight         String?  // 荷重
+  packageCategory    String?  // 種別
+  palletSize         String?  // バレット等サイズ
+  procurementType    String?  // 手配区分
+
+  // 設置場所
+  buildingType       String?  // 建屋・西部設備 新築/既設
+  installSpace       String?  // 有効設置スペース
+  architectDrawing   String?  // 建築図有無
+  exteriorDrawing    String?  // 外構図有無
+
+  // 要求格納数
+  storageRequirement String?  // 要求格納数(自動倉庫 等)
+
+  // 工事関連資料
+  constructionDoc    String?  // 工事関連資料
+
+  // SEへの依頼関連ファイル・パス
+  relatedFilePath    String?  // 関連ファイル・パス
+  reqLayout          Boolean  @default(false) // レイアウト案
+  reqLoadDetail      Boolean  @default(false) // 荷姿詳細
+  reqCapacity        Boolean  @default(false) // 要求能力
+  reqOperation       Boolean  @default(false) // 運用関連
+  reqOtherDoc        Boolean  @default(false) // その他（資料内容）
+
+  // 営業への提出
+  submitLayout       Boolean  @default(false) // レイアウト
+  submitCostSheet    Boolean  @default(false) // 見積原価表
+  submitAxialForce   Boolean  @default(false) // 軸力・輪圧
+  submitPowerReq     Boolean  @default(false) // 所用電源容量
+  submitSpecSheet    Boolean  @default(false) // 見積仕様書
+  submitOther        Boolean  @default(false) // その他（提出物）
+  desiredDeadline    DateTime? // 希望提出日限
+  salesComment       String?  // 担当営業コメント
+
+  // 営業課長記入欄
+  managerComment     String?  // 営業課長コメント
+
+  // システム情報
+  sourceQuotationId  String?  // 複製元SE見積依頼ID
+
+  owner         User         @relation("quotationRequestOwner", fields: [ownerId], references: [id])
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  salesPerson   User?        @relation("quotationSalesPerson", fields: [salesPersonId], references: [id])
+  sePerson      User?        @relation("quotationSePerson", fields: [sePersonId], references: [id])
+  seGroupLeader User?        @relation("quotationSeGroupLeader", fields: [seGroupLeaderId], references: [id])
+  seManager     User?        @relation("quotationSeManager", fields: [seManagerId], references: [id])
+
+  @@map("quotation_requests")
+}
+
+enum QuotationStatus {
+  DRAFT
+  SALES_SUBMITTED
+  SE_ASSIGNED
+  SE_WORKING
+  SE_COMPLETED
+  SUBMITTED_TO_SALES
+  NOT_REQUIRED
+  CANCELLED
+}
+
+// 分析情報
+model AnalysisInfo {
+  id               String   @id @default(cuid())
+  name             String
+  opportunityId    String?
+  weight           String?
+  installHeight    String?
+  temperatureZone  String?
+  cleanLevel       String?
+  explosionProof   String?
+  oilSmoke         String?
+  gas              String?
+  plCsType         String?
+  loadL            String?
+  loadW            String?
+  packageType      String?
+  ownerId          String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  owner       User         @relation("analysisInfoOwner", fields: [ownerId], references: [id])
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id])
+
+  @@map("analysis_infos")
+}
+
+// アイディア
+model Idea {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  status      String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner User @relation("ideaOwner", fields: [ownerId], references: [id])
+
+  @@map("ideas")
+}
+
+// 共有カレンダー
+model SharedCalendar {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User @relation("sharedCalendarOwner", fields: [ownerId], references: [id])
+
+  @@map("shared_calendars")
+}
+
+// Chatter投稿
+model ChatterPost {
+  id        String   @id @default(cuid())
+  body      String
+  type      PostType @default(POST)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User             @relation("chatterPostAuthor", fields: [authorId], references: [id])
+  comments ChatterComment[]
+  likes    ChatterLike[]
+
+  @@map("chatter_posts")
+}
+
+enum PostType {
+  POST
+  QUESTION
+  POLL
+}
+
+model ChatterComment {
+  id        String   @id @default(cuid())
+  body      String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  post   ChatterPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User        @relation("chatterCommentAuthor", fields: [authorId], references: [id])
+
+  @@map("chatter_comments")
+}
+
+model ChatterLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post ChatterPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User        @relation("chatterLikeUser", fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+  @@map("chatter_likes")
+}
+
+// 通知
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String?
+  isRead    Boolean  @default(false)
+  type      String?
+  linkUrl   String?
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation("notificationUser", fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// 売上明細
+model SalesDetail {
+  id             String    @id @default(cuid())
+  lineNumber     Int
+  deliveryDate   DateTime?
+  amount         Float?
+  productNumber  String?
+  winProbability String?
+  note           String?
+  isAutoCreated  Boolean   @default(false)
+  opportunityId  String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@map("sales_details")
+}
+
+// リッチテキストウィジェット
+model RichTextWidget {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  position  String   @default("home_right")
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("rich_text_widgets")
+}
